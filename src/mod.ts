@@ -259,6 +259,18 @@ const parseArgs = <T extends Executable<ValidFlags>>(
           if (!nextArg) abort(`Missing value for flag "${flagName}"`);
           value = nextArg;
         }
+
+        // Ensure value matches flag expectations
+        if (
+          flag.only &&
+          !(flag.only instanceof RegExp
+            ? flag.only.test(value)
+            : flag.only.includes(value))
+        )
+          abort(
+            `Invalid value for flag "${flagName}". Run command with "--help" for a list of valid values.`
+          );
+
         resultFlags[flagName as keyof ReturnFlags] =
           value as ReturnFlags[string];
         requiredFlags.delete(flagName);
@@ -349,7 +361,7 @@ const runCommand = (
  * @example
  * ```ts
  * import * as CLI from "@md/cli";
- * 
+ *
  * const commands: CLI.CommandMap = {
  *   example: CLI.command(
  *     {
@@ -371,7 +383,7 @@ const runCommand = (
  *     } as const // Use `as const` to correctly infer flag validation
  *   ).runner((args, flags) => {
  *     // We now get the two validated arguments and typed flags
- *     console.log(args, flags); 
+ *     console.log(args, flags);
  *   }),
  * };
  * CLI.create("Example API", commands).run(); // Same as `CLI.create(...).run(Deno.args);`
