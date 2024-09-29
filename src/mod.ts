@@ -47,6 +47,7 @@ export type FlagsReturn<T extends ValidFlags> = {
   [key in Exclude<keyof T, InvalidFlags>]: FlagReturn<T[key]>;
 };
 
+/** The function used within a {@link Executable} that runs on an executable command with the provided arguments and flags */
 export type Runner<Flags extends ValidFlags> = (
   args: string[],
   flags: Flags extends ValidFlags
@@ -54,11 +55,14 @@ export type Runner<Flags extends ValidFlags> = (
     : void
 ) => unknown;
 
+/** A named list of arguments a command accepts */
 export type ArgumentList = string[];
 
+/** Shared properties by any command type */
 type BaseCommand = {
   description: string;
 };
+/** An executable command that has a `run` function */
 export type Executable<Flags extends ValidFlags> = BaseCommand & {
   run: Runner<Flags>;
   dangerous: boolean;
@@ -67,32 +71,40 @@ export type Executable<Flags extends ValidFlags> = BaseCommand & {
   /** An example on how to use the command */
   example?: string;
 };
+/** A group of commands such as `aws *s3* list` (s3 being the group) */
 export type Parent = BaseCommand & {
   children: CommandMap;
 };
+/** Any type of command */
 export type Command<Flags extends ValidFlags> = Parent | Executable<Flags>;
 
+/** A single nested layer of commands and groups available */
 // deno-lint-ignore no-explicit-any
 export type CommandMap = { [key: string]: Command<any> };
 
 /** The ReturnType of the {@link create} function */
 export type CLI = { run: (args?: string[]) => unknown };
 
+/** Exits the process with an error message */
 const abort = (message: string) => {
   console.error(message);
   Deno.exit(1);
 };
 
+/** Creates an error message for the user notifying them on how to run the command correctly */
 const invalidCommandString = (
   commandName: string | undefined,
   path: string[]
 ): string => {
+  // If we're at the top level
   if (!path.length) {
+    /** Shared message for both cases */
     const runInstruction = 'Run "--help" to get a list of valid commands.';
     if (commandName === undefined)
       return "No command specified. " + runInstruction;
     else return `The command "${commandName}" doesn't exist. ${runInstruction}`;
   } else {
+    /** Human readable nested path name to the command */
     const pathName = path.join(" ");
     const runInstruction = `Run "${pathName} --help" to get a list of valid subcommands.`;
     if (commandName === undefined)
@@ -102,6 +114,12 @@ const invalidCommandString = (
   }
 };
 
+/**
+ * Builds a string table for logging structured data to the console
+ * 
+ * @param columns The amount of columns in the table
+ * @returns A table to add data to using `push` and convert to a string using `build`
+ */
 const createTable = (
   columns: number
 ): {
@@ -151,6 +169,12 @@ const createTable = (
   return { push, build };
 };
 
+/**
+ * Logs the help text for a command or group to the console
+ * 
+ * @param command The command to describe
+ * @param path The nested path in the CLI to the command
+ */
 const logHelp = (command: Command<ValidFlags>, path: string[]) => {
   const type = "run" in command ? "command" : "group";
   const helpText = [
@@ -209,6 +233,14 @@ const logHelp = (command: Command<ValidFlags>, path: string[]) => {
   console.log(helpText.join("\n"));
 };
 
+/**
+ * Transforms the linear CLI arguments provided into the structure to be passed to the command's `run` function.
+ * Validates arguments and flags satisfy the command's requirements
+ * 
+ * @param args The args passed to the CLI
+ * @param command The command to parse `args` for
+ * @returns The parsed and validated command arguments and flags
+ */
 const parseArgs = <T extends Executable<ValidFlags>>(
   args: string[],
   command: T
@@ -325,9 +357,32 @@ export const command = <Flags extends ValidFlags>(
   }),
 });
 
-/** Creates a new group of commands */
+/** 
+ * Creates a new group of commands
+ * 
+ * @example
+ * ```ts
+ * group({
+ *   description: "Any S3 related commands",
+ *   children: {
+ *     list: command({...}),
+ *     get: command({...}),
+ *     delete: command({...}),
+ *   }
+ * });
+ * ```
+ */
 export const group = (config: Parent) => config;
 
+/**
+ * Runs a command (recursively if parented) with the provided arguments
+ * 
+ * @param commandMap The command map for the current nesting level
+ * @param args The command name followed by the next arguments 
+ * @param path The "command name path" i.e., the nesting level. Used for help message logging
+ * @param isHelp If the help message should be printed. If false, run the command instead
+ * @returns The result of the command's `run` function
+ */
 const runCommand = (
   commandMap: CommandMap,
   [commandName, ...args]: string[],
@@ -392,7 +447,7 @@ const runCommand = (
  * ```
  *
  * @param commands The commands that are possible in the CLI interface
- * @returns A CLI object which can be run on a set of commands
+ * @returns A CLI object which can be run on a set of arguments
  */
 export const create = (description: string, commands: CommandMap): CLI => ({
   run: (args = Deno.args) => {
