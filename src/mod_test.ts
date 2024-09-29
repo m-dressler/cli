@@ -66,12 +66,12 @@ const commands: CLI.CommandMap = {
       valueEnum: {
         description: "A value flag for an enum",
         type: "value",
-        values: ["hello", "world"],
+        only: ["hello", "world"],
       },
       valueRegex: {
         description: "A value flag for regex",
         type: "value",
-        values: /\d+/,
+        only: /\d+/,
       },
     },
   }).runner((args, flags) => console.log(args, flags)),
