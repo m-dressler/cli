@@ -1,6 +1,6 @@
 {
   "name": "@md/cli",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "exports": "./src/mod.ts",
   "imports": {
     "@md/assert-console": "jsr:@md/assert-console@^0.0.1",
