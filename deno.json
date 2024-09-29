@@ -1,7 +1,7 @@
 {
   "name": "@md/cli",
   "version": "0.0.2",
-  "exports": "./src/mod.ts",
+  "exports": "./mod.ts",
   "license": "ISC",
   "exclude": [".github/"]
 }
