@@ -2,6 +2,7 @@
   "name": "@md/cli",
   "version": "0.0.1",
   "exports": "./src/mod.ts",
+  "license": "ISC",
   "imports": {
     "@md/assert-console": "jsr:@md/assert-console@^0.0.1",
     "@std/assert": "jsr:@std/assert@^0.220.1"
