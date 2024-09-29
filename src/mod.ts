@@ -213,6 +213,8 @@ const parseArgs = <T extends Executable<ValidFlags>>(
   args: string[],
   command: T
 ): [args: string[], flags: FlagsReturn<ValidFlags>] => {
+  /** The text to prefix to the second error message sentence */
+  const errorHelpText = 'Run command with "--help" for';
   const expectedFlags = command.flags || {};
 
   const shortFlagMap: Record<string, string> = {};
@@ -246,7 +248,7 @@ const parseArgs = <T extends Executable<ValidFlags>>(
       const flag = expectedFlags[flagName];
       if (!flag)
         abort(
-          `Unknown flag "${flagName}" specified. Run command with "--help" for a list of valid flags.`
+          `Unknown flag "${flagName}" specified. ${errorHelpText} a list of valid flags.`
         );
       if (flag.type === "boolean")
         resultFlags[flagName as keyof ReturnFlags] =
@@ -268,7 +270,7 @@ const parseArgs = <T extends Executable<ValidFlags>>(
             : flag.only.includes(value))
         )
           abort(
-            `Invalid value for flag "${flagName}". Run command with "--help" for a list of valid values.`
+            `Invalid value for flag "${flagName}". ${errorHelpText} a list of valid values.`
           );
 
         resultFlags[flagName as keyof ReturnFlags] =
@@ -284,7 +286,7 @@ const parseArgs = <T extends Executable<ValidFlags>>(
         const flag = shortFlagMap[short];
         if (!flag)
           abort(
-            `Unknown short-flag "${short}" specified. Run command with "--help" for a list of valid flags.`
+            `Unknown short-flag "${short}" specified. ${errorHelpText} a list of valid flags.`
           );
         else
           resultFlags[flag as keyof ReturnFlags] = true as ReturnFlags[string];
@@ -306,7 +308,7 @@ const parseArgs = <T extends Executable<ValidFlags>>(
 
   if (!validLengths.some((length) => length === resultArgs.length))
     abort(
-      `Invalid argument count (${resultArgs.length}). Run command with "--help" for valid argument combinations.`
+      `Invalid argument count (${resultArgs.length}). ${errorHelpText} valid argument combinations.`
     );
 
   return [resultArgs, resultFlags as ReturnFlags] as const;
