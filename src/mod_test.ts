@@ -464,6 +464,60 @@ Deno.test({
 });
 
 Deno.test({
+  name: "Passes with valid enum flag",
+  fn: testCommand({
+    input: [
+      "argsAndFlags",
+      "arg1",
+      "arg2",
+      "arg3",
+      "--requiredValue=someValue",
+      "--valueEnum=hello",
+    ],
+    errorExit: false,
+    log: [
+      [
+        ["arg1", "arg2", "arg3"],
+        {
+          boolean: false,
+          booleanShort: false,
+          booleanShort2: false,
+          requiredValue: "someValue",
+          valueEnum: "hello",
+        },
+      ],
+    ],
+  }),
+});
+
+Deno.test({
+  name: "Passes with valid regex flag",
+  fn: testCommand({
+    input: [
+      "argsAndFlags",
+      "arg1",
+      "arg2",
+      "arg3",
+      "--requiredValue=someValue",
+      "--valueRegex=523",
+    ],
+    errorExit: false,
+    log: [
+      [
+        ["arg1", "arg2", "arg3"],
+        {
+          boolean: false,
+          booleanShort: false,
+          booleanShort2: false,
+          requiredValue: "someValue",
+          valueRegex: "523",
+        },
+      ],
+    ],
+  }),
+});
+
+Deno.test({
   name: "Passes when value is passed in `--flag=value` format",
   fn: testCommand({
     input: [
@@ -577,6 +631,46 @@ Deno.test({
     error: [
       [
         'Unknown short-flag "i" specified. Run command with "--help" for a list of valid flags.',
+      ],
+    ],
+  }),
+});
+
+Deno.test({
+  name: "Correctly rejects invalid enum flag",
+  fn: testCommand({
+    input: [
+      "argsAndFlags",
+      "arg1",
+      "arg2",
+      "arg3",
+      "--requiredValue=someValue",
+      "--valueEnum=wrong",
+    ],
+    errorExit: true,
+    error: [
+      [
+        'Invalid value for flag "valueEnum". Run command with "--help" for a list of valid values.',
+      ],
+    ],
+  }),
+});
+
+Deno.test({
+  name: "Correctly rejects invalid regex flag",
+  fn: testCommand({
+    input: [
+      "argsAndFlags",
+      "arg1",
+      "arg2",
+      "arg3",
+      "--requiredValue=someValue",
+      "--valueRegex=wrong",
+    ],
+    errorExit: true,
+    error: [
+      [
+        'Invalid value for flag "valueRegex". Run command with "--help" for a list of valid values.',
       ],
     ],
   }),
