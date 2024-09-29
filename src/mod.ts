@@ -80,8 +80,7 @@ const createTable = (
 const logHelp = (command: Command<Flag.ValidFlags>, path: string[]) => {
   const type = "run" in command ? "command" : "group";
   const helpText = [
-    `Help for ${type} "${path.join("/")}":`,
-    "",
+    ...(path.length ? [`Help for ${type} "${path.join("/")}":`, ""] : []),
     "Description:",
     command.description,
   ];

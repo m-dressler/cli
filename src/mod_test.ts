@@ -132,8 +132,6 @@ Deno.test({
     log: [
       [
         [
-          'Help for group "":',
-          "",
           "Description:",
           "An example API",
           "",
