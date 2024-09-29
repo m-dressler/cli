@@ -1,7 +1,6 @@
 /** A compound helper type that removes all `Omits` from `T` and makes all keys from `Optional` optional in `T` */
 type Selective<
-  // deno-lint-ignore no-explicit-any
-  T extends { [k: string]: any },
+  T extends { [k: string]: unknown },
   Optionals extends keyof T,
   Omits extends keyof T
 > = Omit<T, Omits | Optionals> & Partial<Pick<T, Optionals>>;
@@ -57,8 +56,7 @@ export type Runner<Flags extends ValidFlags> = (
   flags: Flags extends ValidFlags
     ? { [key in Exclude<keyof Flags, InvalidFlags>]: FlagReturn<Flags[key]> }
     : void
-  // deno-lint-ignore no-explicit-any
-) => any;
+) => unknown;
 
 export type ArgumentList = string[];
 
@@ -82,8 +80,7 @@ export type Command<Flags extends ValidFlags> = Parent | Executable<Flags>;
 export type CommandMap = { [key: string]: Command<any> };
 
 /** The ReturnType of the {@link create} function */
-// deno-lint-ignore no-explicit-any
-export type CLI = { run: (args?: string[]) => Promise<any> };
+export type CLI = { run: (args?: string[]) => unknown };
 
 const abort = (message: string) => {
   console.error(message);
@@ -326,8 +323,7 @@ const runCommand = (
   [commandName, ...args]: string[],
   path: string[],
   isHelp: boolean
-): // deno-lint-ignore no-explicit-any
-any => {
+): unknown => {
   const command = commandMap[commandName];
   if (!command) abort(invalidCommandString(commandName, path));
 
