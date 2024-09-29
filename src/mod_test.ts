@@ -14,7 +14,7 @@ Deno.exit = (status) => {
   throw new ExitError(status);
 };
 
-const commands: CLI.Command.Map = {
+const commands: CLI.CommandMap = {
   basic: CLI.command({
     description: "This is a basic command",
   }).runner(() => console.log("basic")),

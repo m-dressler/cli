@@ -1,5 +1,85 @@
-import type { Flag, Command, Selective } from "./types.d.ts";
-export type { Command, Flag };
+/** A compound helper type that removes all `Omits` from `T` and makes all keys from `Optional` optional in `T` */
+type Selective<
+  // deno-lint-ignore no-explicit-any
+  T extends { [k: string]: any },
+  Optionals extends keyof T,
+  Omits extends keyof T
+> = Omit<T, Omits | Optionals> & Partial<Pick<T, Optionals>>;
+
+/** The attributes shared by all flags */
+type Base = {
+  description: string;
+};
+/** A flag that can be set to true or false */
+export type BooleanFlag = Base & {
+  type: "boolean";
+  short?: string;
+};
+/** A flag that can be set to a specific value */
+export type ValueFlag = Base & {
+  type: "value";
+  required?: boolean;
+  /** The values this flag accepts. If omitted, accepts anything */
+  only?: RegExp | string[];
+};
+/** All different types of flags */
+export type Flag = BooleanFlag | ValueFlag;
+/** Flags that are handled by the package */
+type InvalidFlags = "force" | "help";
+/**
+ * A record of flags for a command excluding flags that are handled by the package
+ *
+ * `force` — create the command with `dangerous` set to true instead. This will ask the user to confirm if --force is not specified
+ * `help` — this is automatically handled via the `description` fields on Commands and Flags
+ */
+export type ValidFlags = { [key: string]: Flag } & {
+  [key in InvalidFlags]?: never;
+};
+/** A helper type for the `FlagReturn` */
+type RequiredReturn<Required extends boolean | void, T> = Required extends true
+  ? T
+  : T | undefined;
+/** A helper type for the `FlagsReturn` */
+type FlagReturn<T extends Flag> = T extends ValueFlag
+  ? RequiredReturn<
+      T["required"],
+      // TODO TS doesn't correctly return enum options as values here
+      T["only"] extends Array<infer R> ? R : string
+    >
+  : boolean;
+/** Infers the TS ReturnType that a flag will create */
+export type FlagsReturn<T extends ValidFlags> = {
+  [key in Exclude<keyof T, InvalidFlags>]: FlagReturn<T[key]>;
+};
+
+export type Runner<Flags extends ValidFlags> = (
+  args: string[],
+  flags: Flags extends ValidFlags
+    ? { [key in Exclude<keyof Flags, InvalidFlags>]: FlagReturn<Flags[key]> }
+    : void
+  // deno-lint-ignore no-explicit-any
+) => any;
+
+export type ArgumentList = string[];
+
+type BaseCommand = {
+  description: string;
+};
+export type Executable<Flags extends ValidFlags> = BaseCommand & {
+  run: Runner<Flags>;
+  dangerous: boolean;
+  arguments?: ArgumentList | ArgumentList[];
+  flags?: Flags;
+  /** An example on how to use the command */
+  example?: string;
+};
+export type Parent = BaseCommand & {
+  children: CommandMap;
+};
+export type Command<Flags extends ValidFlags> = Parent | Executable<Flags>;
+
+// deno-lint-ignore no-explicit-any
+export type CommandMap = { [key: string]: Command<any> };
 
 /** The ReturnType of the {@link create} function */
 // deno-lint-ignore no-explicit-any
@@ -78,7 +158,7 @@ const createTable = (
   return { push, build };
 };
 
-const logHelp = (command: Command<Flag.ValidFlags>, path: string[]) => {
+const logHelp = (command: Command<ValidFlags>, path: string[]) => {
   const type = "run" in command ? "command" : "group";
   const helpText = [
     ...(path.length ? [`Help for ${type} "${path.join("/")}":`, ""] : []),
@@ -92,7 +172,7 @@ const logHelp = (command: Command<Flag.ValidFlags>, path: string[]) => {
       const argLists = command.arguments;
       const lists = (
         argLists[0] && Array.isArray(argLists[0]) ? argLists : [argLists]
-      ) as Command.ArgumentList[];
+      ) as ArgumentList[];
       for (const list of lists) helpText.push("\t" + list.join(" "));
     } else helpText.push("\nArguments: NONE");
     if (command.flags) {
@@ -136,16 +216,16 @@ const logHelp = (command: Command<Flag.ValidFlags>, path: string[]) => {
   console.log(helpText.join("\n"));
 };
 
-const parseArgs = <T extends Command.Executable<Flag.ValidFlags>>(
+const parseArgs = <T extends Executable<ValidFlags>>(
   args: string[],
   command: T
-): [args: string[], flags: Flag.FlagsReturn<Flag.ValidFlags>] => {
+): [args: string[], flags: FlagsReturn<ValidFlags>] => {
   const expectedFlags = command.flags || {};
 
   const shortFlagMap: Record<string, string> = {};
   const requiredFlags = new Set<string>();
 
-  type ReturnFlags = Flag.FlagsReturn<typeof expectedFlags>;
+  type ReturnFlags = FlagsReturn<typeof expectedFlags>;
   const resultFlags: Partial<ReturnFlags> = {};
   const resultArgs: string[] = [];
 
@@ -228,10 +308,10 @@ const parseArgs = <T extends Command.Executable<Flag.ValidFlags>>(
 };
 
 /** Creates a new command with inferred types for the flags and arguments. */
-export const command = <Flags extends Flag.ValidFlags>(
-  config: Selective<Command.Executable<Flags>, "dangerous", "run">
+export const command = <Flags extends ValidFlags>(
+  config: Selective<Executable<Flags>, "dangerous", "run">
 ) => ({
-  runner: (run: Command.Runner<Flags>): Command.Executable<Flags> => ({
+  runner: (run: Runner<Flags>): Executable<Flags> => ({
     dangerous: false,
     ...config,
     run,
@@ -239,10 +319,10 @@ export const command = <Flags extends Flag.ValidFlags>(
 });
 
 /** Creates a new group of commands */
-export const group = (config: Command.Parent) => config;
+export const group = (config: Parent) => config;
 
 const runCommand = (
-  commandMap: Command.Map,
+  commandMap: CommandMap,
   [commandName, ...args]: string[],
   path: string[],
   isHelp: boolean
@@ -289,7 +369,7 @@ any => {
  * @param commands The commands that are possible in the CLI interface
  * @returns A CLI object which can be run on a set of commands
  */
-export const create = (description: string, commands: Command.Map): CLI => ({
+export const create = (description: string, commands: CommandMap): CLI => ({
   run: (args = Deno.args) => {
     const isHelp = args.includes("--help") || args.includes("-h");
     if (isHelp) {
