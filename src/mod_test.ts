@@ -1,7 +1,7 @@
 import { assertThrows, assertFalse, assertEquals } from "@std/assert";
-import { LogHistory, assertConsole } from "@md/assert-console";
+import { type LogHistory, assertConsole } from "@md/assert-console";
 
-import * as CLI from "./index.ts";
+import * as CLI from "./mod.ts";
 import {} from "jsr:@std/assert@^0.220.1/assert_false";
 
 class ExitError extends Error {

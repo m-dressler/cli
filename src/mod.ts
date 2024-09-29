@@ -1,4 +1,5 @@
-import { Flag, Command, Selective } from "./types.d.ts";
+import type { Flag, Command, Selective } from "./types.d.ts";
+export type { Command, Flag };
 
 // deno-lint-ignore no-explicit-any
 export type CLI = { run: (args?: string[]) => Promise<any> };
