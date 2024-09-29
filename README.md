@@ -5,12 +5,31 @@ Create a standardized CLI in a type-safe way.
 ```
 import * as CLI from "@md/cli";
 
-const cli = CLI.create({
-  example: {
-    description: "Showcases @md/cli",
-    run: () => console.log("Hello World"),
-  },
-});
+const commands: CLI.CommandMap = {
+  example: CLI.command(
+    {
+      description: "Example command",
+      arguments: ["two", "commands"], // This command requires two arguments
+      flags: {
+        boolean: {
+          description: "A boolean flag with short form",
+          type: "boolean", // True if present in arguments
+          short: "b", // Can use -b instead of --boolean
+        },
+        valueEnum: {
+          description: "A value flag for an enum",
+          type: "value", // This flag should be a string value
+          required: true, // False if omitted
+          only: ["hello", "world"], // Could also be a regex or omitted for `any`
+        },
+      },
+    } as const // Use `as const` to correctly infer flag validation
+  ).runner((args, flags) => {
+    // We now get the two validated arguments and typed flags
+    console.log(args, flags); 
+  }),
+};
+CLI.create("Example API", commands).run(); // Same as `CLI.create(...).run(Deno.args);`
 ```
 
 ## Philosophy

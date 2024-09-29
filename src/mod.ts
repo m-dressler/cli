@@ -40,11 +40,7 @@ type RequiredReturn<Required extends boolean | void, T> = Required extends true
   : T | undefined;
 /** A helper type for the `FlagsReturn` */
 type FlagReturn<T extends Flag> = T extends ValueFlag
-  ? RequiredReturn<
-      T["required"],
-      // TODO TS doesn't correctly return enum options as values here
-      T["only"] extends Array<infer R> ? R : string
-    >
+  ? RequiredReturn<T["required"], T["only"] extends Array<infer R> ? R : string>
   : boolean;
 /** Infers the TS ReturnType that a flag will create */
 export type FlagsReturn<T extends ValidFlags> = {
@@ -353,12 +349,31 @@ const runCommand = (
  * @example
  * ```ts
  * import * as CLI from "@md/cli";
- *
- * const commands: CLI.Command.Map = {
- *   example: CLI.command({
- *   })
- * }
- *
+ * 
+ * const commands: CLI.CommandMap = {
+ *   example: CLI.command(
+ *     {
+ *       description: "Example command",
+ *       arguments: ["two", "commands"], // This command requires two arguments
+ *       flags: {
+ *         boolean: {
+ *           description: "A boolean flag with short form",
+ *           type: "boolean", // True if present in arguments
+ *           short: "b", // Can use -b instead of --boolean
+ *         },
+ *         valueEnum: {
+ *           description: "A value flag for an enum",
+ *           type: "value", // This flag should be a string value
+ *           required: true, // False if omitted
+ *           only: ["hello", "world"], // Could also be a regex or omitted for `any`
+ *         },
+ *       },
+ *     } as const // Use `as const` to correctly infer flag validation
+ *   ).runner((args, flags) => {
+ *     // We now get the two validated arguments and typed flags
+ *     console.log(args, flags); 
+ *   }),
+ * };
  * CLI.create("Example API", commands).run(); // Same as `CLI.create(...).run(Deno.args);`
  * ```
  *

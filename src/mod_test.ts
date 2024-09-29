@@ -74,7 +74,7 @@ const commands: CLI.CommandMap = {
         only: /\d+/,
       },
     },
-  }).runner((args, flags) => console.log(args, flags)),
+  } as const).runner((args, flags) => console.log(args, flags)),
 
   nest1: CLI.group({
     description: "First level nesting",
