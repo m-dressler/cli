@@ -6,16 +6,16 @@ type Selective<
 > = Omit<T, Omits | Optionals> & Partial<Pick<T, Optionals>>;
 
 /** The attributes shared by all flags */
-type Base = {
+type BaseFlag = {
   description: string;
 };
 /** A flag that can be set to true or false */
-export type BooleanFlag = Base & {
+export type BooleanFlag = BaseFlag & {
   type: "boolean";
   short?: string;
 };
 /** A flag that can be set to a specific value */
-export type ValueFlag = Base & {
+export type ValueFlag = BaseFlag & {
   type: "value";
   required?: boolean;
   /** The values this flag accepts. If omitted, accepts anything */
