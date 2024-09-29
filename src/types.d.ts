@@ -1,3 +1,4 @@
+/** A compound helper type that removes all `Omits` from `T` and makes all keys from `Optional` optional in `T` */
 export type Selective<
   // deno-lint-ignore no-explicit-any
   T extends { [k: string]: any },
@@ -5,22 +6,28 @@ export type Selective<
   Omits extends keyof T
 > = Omit<T, Omits | Optionals> & Partial<Pick<T, Optionals>>;
 
+/** All different types of flags that can be used */
 export namespace Flag {
+  /** The attributes shared by all flags */
   type Base = {
     description: string;
   };
+  /** A flag that can be set to true or false */
   export type BooleanFlag = Base & {
     type: "boolean";
     short?: string;
   };
+  /** A flag that can be set to a specific value */
   export type ValueFlag = Base & {
     type: "value";
     required?: boolean;
     /** The values this flag accepts. If omitted, accepts anything */
     only?: RegExp | string[];
   };
+  /** All different types of flags */
   export type Flag = BooleanFlag | ValueFlag;
 
+  /** Flags that are handled by the package */
   type InvalidFlags = "force" | "help";
   /**
    * A record of flags for a command excluding flags that are handled by the package
@@ -36,6 +43,7 @@ export namespace Flag {
     Required extends boolean | void,
     T
   > = Required extends true ? T : T | undefined;
+
   type FlagReturn<T extends Flag> = T extends ValueFlag
     ? RequiredReturn<
         T["required"],
@@ -43,6 +51,8 @@ export namespace Flag {
         T["only"] extends Array<infer R> ? R : string
       >
     : boolean;
+
+  /** Infers the TS ReturnType that a flag will create */
   export type FlagsReturn<T extends ValidFlags> = {
     [key in Exclude<keyof T, InvalidFlags>]: FlagReturn<T[key]>;
   };

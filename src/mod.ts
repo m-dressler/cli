@@ -1,6 +1,7 @@
 import type { Flag, Command, Selective } from "./types.d.ts";
 export type { Command, Flag };
 
+/** The ReturnType of the {@link create} function */
 // deno-lint-ignore no-explicit-any
 export type CLI = { run: (args?: string[]) => Promise<any> };
 
@@ -226,6 +227,7 @@ const parseArgs = <T extends Command.Executable<Flag.ValidFlags>>(
   return [resultArgs, resultFlags as ReturnFlags] as const;
 };
 
+/** Creates a new command with inferred types for the flags and arguments. */
 export const command = <Flags extends Flag.ValidFlags>(
   config: Selective<Command.Executable<Flags>, "dangerous", "run">
 ) => ({
@@ -236,6 +238,7 @@ export const command = <Flags extends Flag.ValidFlags>(
   }),
 });
 
+/** Creates a new group of commands */
 export const group = (config: Command.Parent) => config;
 
 const runCommand = (
@@ -284,7 +287,7 @@ any => {
  * ```
  *
  * @param commands The commands that are possible in the CLI interface
- * @returns A
+ * @returns A CLI object which can be run on a set of commands
  */
 export const create = (description: string, commands: Command.Map): CLI => ({
   run: (args = Deno.args) => {
